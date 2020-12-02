@@ -1,9 +1,36 @@
-import React from 'react';
+import React , {useState}from 'react';
 import {View,Text, Button, KeyboardAvoidingView, TextInput, StyleSheet, Image, TouchableOpacity} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import {Loading } from './styles';
+import axios from 'axios';
+
 
 export default function Cadastro(){
     const navigation = useNavigation();
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    
+    async function register() {
+        if (loading || !email || !password) return;
+        
+        setLoading(true);
+        
+        axios
+        .post(`https://5fc2a1819210060016869a4b.mockapi.io/users`, {email,password})
+        .then(response => {
+          const data = response.data
+          console.log(data)
+          setLoading(false)
+          navigation.push('Login')
+        })
+        .catch(err => {
+          setError(err.message);
+          setLoading(true)
+        })
+      }
+    
     return(
         <KeyboardAvoidingView style={styles.background}>
         <View style={styles.containerLogo}>
@@ -13,20 +40,30 @@ export default function Cadastro(){
             />
             
         </View>
-
+        {loading ?
         <View>
+            <Loading />
+        </View>
+        :
+        <>
+        <View>
+            {error && (
+            <Text>
+                {error}
+            </Text>
+            )}
             <TextInput
                 style={styles.input}
                 placeholder ="Email"
                 autoCorrect={false}
-                onChangeText={()=>{}}
+                onChangeText={(text) => setEmail(text)}
             />
 
             <TextInput
                 style={styles.input}
                 placeholder ="Senha"
                 autoCorrect={false}
-                onChangeText={()=>{}}
+                onChangeText={(text) => setPassword(text)}
                 secureTextEntry={true}
             />
         </View>
@@ -34,7 +71,7 @@ export default function Cadastro(){
         <View style={styles.buttonContainer}>
         
         <TouchableOpacity 
-        onPress ={()=>navigation.push('Login')}
+        onPress ={register}
         style={styles.btnSubmit}
         
         > 
@@ -42,6 +79,7 @@ export default function Cadastro(){
 
         </TouchableOpacity>
     </View>
+    </>}
 
         </KeyboardAvoidingView>
 
