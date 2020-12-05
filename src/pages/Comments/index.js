@@ -6,24 +6,24 @@ import axios from 'axios';
 
 
 
-const LikeList = props => {
+const Comments = props => {
     const {onPressItem} = props
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
-    const [likes, setLikes] = useState([]); 
+    const [comments, setComments] = useState([]); 
     const post = props.route.params.post;
 
-    async function getLikes() {
+    async function getComments() {
         
         setLoading(true);
         axios
-        .get(`https://5fc2a1819210060016869a4b.mockapi.io/likes`)
+        .get(`https://5fc2a1819210060016869a4b.mockapi.io/comentarios`)
         .then(response => {
           const data = response.data.filter((dataItem)=>{
                 return dataItem.id_post === post;
           });
 
-          setLikes(data);
+          setComments(data);
 
          setError("Usuário ou Senha Inválidos");
         })
@@ -33,14 +33,14 @@ const LikeList = props => {
         .finally(()=>{setLoading(false)});
     }
     useEffect(()=>{
-        getLikes();
+        getComments();
     },[]);
 
     const renderItem = ({item}) => {
         return (
             <PostListItem 
                 key={item.id} 
-                likes={item}
+                comments={item}
             />
         )
     }
@@ -49,7 +49,7 @@ const LikeList = props => {
         return (
             <View style={style.headerStyle}>
                 <Text style={style.titleStyle}>
-                    Listagem de Curtidas
+                    Listagem de Comentários
                 </Text>
             </View>
         )
@@ -65,7 +65,7 @@ const LikeList = props => {
         <View style={style.container}>
             <SafeAreaView>
                 <FlatList
-                    data={likes}
+                    data={comments}
                     renderItem={renderItem}
                     keyExtractor={(item, index) => {item.id + index}}
                     ListHeaderComponent={header}
@@ -96,4 +96,4 @@ const style = StyleSheet.create(
     }
 )
 
-export default LikeList;
+export default Comments;

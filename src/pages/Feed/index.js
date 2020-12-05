@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, FlatList,Button , View, ScrollView, TextInput} from 'react-native';
+import { StyleSheet, FlatList,Button , View, ScrollView, TextInput, TouchableOpacity, Text} from 'react-native';
 import axios from 'axios'
 import LazyImage from '../../components/LazyImage';
 import { AsyncStorage } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 
 import { Container, Post, Header, Avatar, Name, Description, Loading } from './styles';
 
 export default function Feed() {
+  const navigation = useNavigation();
   const [error, setError] = useState('');
   const [feed, setFeed] = useState([]);
   const [page, setPage] = useState(1);
@@ -15,9 +17,9 @@ export default function Feed() {
   const [viewable, setViewable] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [text, setText] = useState('')
-  const [comentarios, setComentarios] = useState([])
-
+  const [text, setText] = useState('');
+  const [comentarios, setComentarios] = useState([]);
+  const [btnClick, setBtnClick] = useState(false);
   const MAX_LENGTH = 250;
 
   async function loadPage(pageNumber = page, shouldRefresh = false) {
@@ -39,6 +41,24 @@ export default function Feed() {
       setTotal(Math.floor(totalItems / 4));
       setPage(pageNumber + 1);
       setFeed(shouldRefresh ? data : [...feed, ...data]);
+    })
+    .catch(err => {
+      setError(err.message);
+      setLoading(true)
+    })
+  }
+  async function likes() {
+    if (loading) return;
+    
+    setLoading(true);
+    
+    axios
+    .get(`https://5fc2a1819210060016869a4b.mockapi.io/users`)
+    .then(response => {
+      const data = response.data
+      console.log(data)
+      setLoading(false)
+      navigation.push('Likes')
     })
     .catch(err => {
       setError(err.message);
@@ -70,6 +90,7 @@ export default function Feed() {
 
   const onSave = async (id) => {
     try {
+      //criar um componente pra comentarios em um estado 
       await AsyncStorage.setItem(id, text);
       setComentarios([...comentarios, ...text])
     } catch (error) {
@@ -107,11 +128,13 @@ export default function Feed() {
               {comentarios}
             </Description>*/}
            
-            <Button
-              title="Curtir"
-              onPress={() => onSave(String(item.id))}
-              accessibilityLabel="Salvar">
-            </Button>
+           <TouchableOpacity
+            style={btnClick? styles.btnClick : styles.btn}
+            onPress ={()=>setBtnClick(!btnClick)}
+          > 
+          <Text style={styles.btnName}>Curtir</Text>
+
+        </TouchableOpacity>
 
            
 
@@ -123,12 +146,29 @@ export default function Feed() {
               maxLength={MAX_LENGTH}
               value={text}/>
 
-            <Button
+        
+        <Button
               title="Salvar"
               onPress={() => onSave(String(item.id))}
               accessibilityLabel="Salvar">
             </Button>
 
+            <TouchableOpacity
+            style={styles.btn}
+            onPress={()=>{navigation.push("Likes", {post: item.id})}}>
+
+          <Text style={styles.btnName}>Curtidas</Text>
+
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+            style={styles.btn}
+            onPress={()=>{navigation.push("Comentarios", {post: item.id})}}>
+ 
+          <Text style={styles.btnName}>Comentarios</Text>
+
+        </TouchableOpacity>
+            
       </Post>
     )
   }
@@ -169,4 +209,29 @@ const styles = StyleSheet.create(
     minHeight: 170,
     borderTopWidth: 1,
     borderColor: "rgba(212,211,211, 0.3)"
-}})
+
+
+  },
+  btnClick:{
+    backgroundColor:"#FF6B6B",
+    width:100,
+    height:50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft:5
+  },
+  btn:{
+    backgroundColor:"#35AAFF", 
+    width:100,
+    height:50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft:5
+  },
+  btnName:{
+    alignItems: 'center',
+    color:"#fff"
+
+  }
+
+})

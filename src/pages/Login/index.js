@@ -13,6 +13,8 @@ export default function Login(){
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     
+    
+    
     async function login() {
         if (loading || !email || !password) return;
         
@@ -35,7 +37,7 @@ export default function Login(){
         })
         .catch(err => {
           setError(err.message);
-          setLoading(true)
+          setLoading(false)
         })
       }
    
@@ -56,11 +58,13 @@ export default function Login(){
         <>
 
         <View>
-        {error && (
+        {error ? (
             <Text style={styles.msgError}>
                 {error}
             </Text>
-            )}
+            
+            ):<Text/>}
+
             <TextInput
                 style={styles.input}
                 placeholder ="Email"
@@ -81,8 +85,7 @@ export default function Login(){
         
         <TouchableOpacity
           style={styles.btnSubmit}
-          onPress={login}
-          >
+          onPress={login}>
 
           <Text style={styles.submitText}>Entrar</Text>
 
