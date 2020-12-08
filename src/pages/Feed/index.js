@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, FlatList,Button , View, ScrollView, TextInput, TouchableOpacity, Text} from 'react-native';
+import { StyleSheet, FlatList,Button , View, ScrollView, TextInput, TouchableOpacity, Text, Image} from 'react-native';
 import axios from 'axios'
 import LazyImage from '../../components/LazyImage';
 import { AsyncStorage } from 'react-native';
@@ -8,7 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import { Container, Post, Header, Avatar, Name, Description, Loading } from './styles';
 
-export default function Feed() {
+export default function Feed(props) {
   const navigation = useNavigation();
   const [error, setError] = useState('');
   const [feed, setFeed] = useState([]);
@@ -18,12 +18,19 @@ export default function Feed() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [text, setText] = useState('');
-  const [comentarios, setComentarios] = useState([]);
+  const [comments, setComments] = useState([]);
   const [btnClick, setBtnClick] = useState(false);
+  const [myLikes, setMyLikes] = useState([]);
+  const [users, setUsers] = useState([]);
   const MAX_LENGTH = 250;
+  const userId = props.route.params.userId;
+  const userName = props.route.params.userName;
+  const userAvatar = props.route.params.userAvatar;
 
   async function loadPage(pageNumber = page, shouldRefresh = false) {
-    if (pageNumber === total) return;
+    console.log(pageNumber);
+    console.log(total);
+    
     if (loading) return;
 
     setLoading(true);
@@ -37,7 +44,10 @@ export default function Feed() {
       const totalItems = response.headers["x-total-count"]
       const data = response.data
       //console.log(data)
-      setLoading(false)
+      getLikes();
+      getUsers();
+      getComments();
+      
       setTotal(Math.floor(totalItems / 4));
       setPage(pageNumber + 1);
       setFeed(shouldRefresh ? data : [...feed, ...data]);
@@ -47,22 +57,117 @@ export default function Feed() {
       setLoading(true)
     })
   }
-  async function likes() {
-    if (loading) return;
+  async function getLikes() {
+    if (loading || !userId ) return;
+    
+    setLoading(true);
+    
+    axios
+    .get(`https://5fc2a1819210060016869a4b.mockapi.io/likes`)
+    .then(response => {
+      const data = response.data
+      console.log(data.filter((item) => {
+        return item.id_user === userId;
+     }));
+      setMyLikes(data.filter((item) => {
+        return item.id_user === userId;
+     }));
+      
+
+    })
+    .catch(err => {
+      setError(err.message);
+      setLoading(false)
+    })
+    .finally(()=>{setLoading(false)});
+  }
+
+  async function getComments() {
+    if (loading || !userId) return;
+    
+    setLoading(true);
+    
+    axios
+    .get(`https://5fc2a1819210060016869a4b.mockapi.io/comentarios`)
+    .then(response => {
+      const data = response.data;
+      setComments(data);
+      setLoading(false);
+
+    })
+    .catch(err => {
+      setError(err.message);
+      setLoading(false)
+    })
+  }
+
+  async function getUsers() {
     
     setLoading(true);
     
     axios
     .get(`https://5fc2a1819210060016869a4b.mockapi.io/users`)
     .then(response => {
-      const data = response.data
-      console.log(data)
-      setLoading(false)
-      navigation.push('Likes')
+      const data = response.data;
+      setUsers(data);
+      setLoading(false);
+
     })
     .catch(err => {
       setError(err.message);
+      setLoading(false)
+    })
+  }
+
+
+  async function like(postId) {
+    if (loading || !userId || !userName || !userAvatar) return;
+    const undoLike = myLikes.filter((lk)=>{return lk.id_post===postId});
+    setLoading(true);
+    if(undoLike.length){
+      axios
+    .delete(`https://5fc2a1819210060016869a4b.mockapi.io/likes/${undoLike[0].id}`)
+    .then(response => {
+      console.log(response);
+      setLoading(false);
+      loadPage(1,true);
+    })
+    
+    .catch(err => {
+      setError(err.message);
       setLoading(true)
+    })
+    }else{
+
+    axios
+    .post(`https://5fc2a1819210060016869a4b.mockapi.io/likes`, {id_post:postId, id_user:userId, name:userName, avatar:userAvatar})
+    .then(response => {
+      console.log(response);
+      setLoading(false);
+      refreshList();
+    })
+    
+    .catch(err => {
+      setError(err.message);
+      setLoading(true)
+    })
+  }
+}
+  async function comment(postId) {
+    if (loading || !userId || !userName || !userAvatar) return;
+    
+    setLoading(true);
+    
+    axios
+    .post(`https://5fc2a1819210060016869a4b.mockapi.io/comentarios`, {id_post:postId,id_user:userId, name:userName, comentarios:text})
+    .then(response => {
+      const data = response.data
+      setLoading(false);
+      refreshList();
+    })
+    .catch(err => {
+      setError(err.message);
+      setLoading(false)
     })
   }
 
@@ -74,31 +179,8 @@ export default function Feed() {
     setRefreshing(false);
   }
 
-  const onGet = (id) => {
-    try {
 
-      const value = AsyncStorage.getItem(id);
 
-      if (value !== null) {
-        // We have data!!
-        setComentarios(value)
-      } 
-    } catch (error) {
-      // Error saving data
-    }
-  }
-
-  const onSave = async (id) => {
-    try {
-      //criar um componente pra comentarios em um estado 
-      await AsyncStorage.setItem(id, text);
-      setComentarios([...comentarios, ...text])
-    } catch (error) {
-      // Error saving data
-    }
-  }
-
-    
 
   useEffect(() => {
     loadPage()
@@ -107,6 +189,7 @@ export default function Feed() {
  
 
   const renderItem = ({item}) => {
+    let counter =0;
     return (
       <Post key = {item.id}>
             <Header>
@@ -120,23 +203,51 @@ export default function Feed() {
               smallSource={{ uri: item.small }}
               source={{ uri: item.photo }}
             />
-
-            <Description>
-              <Name>{item.author.name}</Name> {item.description}
-            </Description>
-            {/*<Description>
-              {comentarios}
-            </Description>*/}
-           
-           <TouchableOpacity
-            style={btnClick? styles.btnClick : styles.btn}
-            onPress ={()=>setBtnClick(!btnClick)}
+              
+        <View style ={{flexDirection:'row'}}>
+        
+        <TouchableOpacity
+            onPress ={()=>like(item.id)}
           > 
-          <Text style={styles.btnName}>Curtir</Text>
+          <Image style={styles.heartIcon}source={myLikes.some((lk)=>{return lk.id_post===item.id})
+            ? require("../../../assets/heart.png")
+            : require("../../../assets/heart-outline.png")}/>
 
         </TouchableOpacity>
 
-           
+        <TouchableOpacity
+        
+            onPress={()=>{navigation.push("Comentarios", {post: item.id})}}>
+ 
+          <Image style={styles.heartIcon} source={require("../../../assets/botao_comentario.png")}/>
+
+        </TouchableOpacity>
+
+        </View>
+              
+              {comments.map((cmt)=>{
+                
+                if(cmt.id_post===item.id && counter<2){
+                  counter++;
+                  const userData = users.filter((usr)=>{return usr.id === cmt.id_user})
+                  return(
+                    <View>
+                        
+                      <Description>
+                          {userData.length?
+                      <Name>{userData[0].name}:</Name>  
+
+                      :<Text/>} 
+                            <Text>
+                                {cmt.comentarios}
+                            </Text>
+                  </Description>
+              
+                  </View>
+                  );
+                  
+                }
+              })}
 
             <TextInput
               multiline={true}
@@ -144,16 +255,17 @@ export default function Feed() {
               placeholder={"Comentários"}
               style={[styles.text]}
               maxLength={MAX_LENGTH}
-              value={text}/>
+              />
 
         
         <Button
               title="Salvar"
-              onPress={() => onSave(String(item.id))}
+              onPress={() => comment(item.id)}
               accessibilityLabel="Salvar">
             </Button>
-
-            <TouchableOpacity
+              <View style ={{flexDirection:'row'}}>
+           
+           <TouchableOpacity
             style={styles.btn}
             onPress={()=>{navigation.push("Likes", {post: item.id})}}>
 
@@ -161,13 +273,8 @@ export default function Feed() {
 
         </TouchableOpacity>
         
-        <TouchableOpacity
-            style={styles.btn}
-            onPress={()=>{navigation.push("Comentarios", {post: item.id})}}>
- 
-          <Text style={styles.btnName}>Comentarios</Text>
-
-        </TouchableOpacity>
+        
+        </View>
             
       </Post>
     )
@@ -226,12 +333,25 @@ const styles = StyleSheet.create(
     height:50,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft:5
+    marginLeft:5, 
+   
   },
   btnName:{
     alignItems: 'center',
     color:"#fff"
 
+  },
+  iconRow: {
+    flexDirection: "row",
+    alignSelf: "stretch",
+    marginTop: 10,
+    paddingVertical: 5,
+    paddingHorizontal: 15
+  },
+  heartIcon: {
+    width: 20,
+    height: 20,
+    marginLeft:10
   }
 
 })

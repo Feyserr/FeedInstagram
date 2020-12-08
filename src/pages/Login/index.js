@@ -29,7 +29,7 @@ export default function Login(){
          
           data.forEach((item) => {
             if(item.email === email && item.password === password) {
-               navigation.push("Feed");
+               navigation.push("Feed", {userId: item.id, userName:item.name, userAvatar:item.avatar});
            }
          });
 
