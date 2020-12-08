@@ -223,6 +223,14 @@ export default function Feed(props) {
 
         </TouchableOpacity>
 
+        <TouchableOpacity
+            onPress={()=>{navigation.push("Likes", {post: item.id})}}>
+          
+          <Image style={styles.heartIcon} source={require("../../../assets/b_like.png")}/>
+          
+
+        </TouchableOpacity>
+
         </View>
               
               {comments.map((cmt)=>{
@@ -263,15 +271,9 @@ export default function Feed(props) {
               onPress={() => comment(item.id)}
               accessibilityLabel="Salvar">
             </Button>
+              
               <View style ={{flexDirection:'row'}}>
-           
-           <TouchableOpacity
-            style={styles.btn}
-            onPress={()=>{navigation.push("Likes", {post: item.id})}}>
 
-          <Text style={styles.btnName}>Curtidas</Text>
-
-        </TouchableOpacity>
         
         
         </View>
@@ -329,12 +331,11 @@ const styles = StyleSheet.create(
   },
   btn:{
     backgroundColor:"#35AAFF", 
-    width:100,
-    height:50,
+    width:360,
+    height:34,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft:5, 
-   
+    marginTop:10
   },
   btnName:{
     alignItems: 'center',
@@ -349,9 +350,10 @@ const styles = StyleSheet.create(
     paddingHorizontal: 15
   },
   heartIcon: {
-    width: 20,
-    height: 20,
-    marginLeft:10
+    width: 30,
+    height: 30,
+    marginLeft:15,
+    marginTop:10
   }
 
 })
