@@ -79,13 +79,13 @@ const LikeList = props => {
 const style = StyleSheet.create(
     {
         container: {
-            backgroundColor: '#e2f977'
+            backgroundColor: '#fff'
         },
         headerStyle: {
             flex: 1,
             height: 50,
             width: '100%',
-            backgroundColor: "#e2a977",
+            backgroundColor: "#00BFFF",
             justifyContent: "center",
             alignItems: 'center'
         },

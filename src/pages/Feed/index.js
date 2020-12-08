@@ -28,6 +28,7 @@ export default function Feed(props) {
   const userAvatar = props.route.params.userAvatar;
 
   async function loadPage(pageNumber = page, shouldRefresh = false) {
+    if(total && pageNumber > total) return;
     console.log(pageNumber);
     console.log(total);
     
@@ -41,7 +42,7 @@ export default function Feed(props) {
     axios
     .get(`https://5fc2a1819210060016869a4b.mockapi.io/posts`)
     .then(response => {
-      const totalItems = response.headers["x-total-count"]
+      const totalItems = response.headers["X-Total-Count"]
       const data = response.data
       //console.log(data)
       getLikes();
@@ -320,14 +321,6 @@ const styles = StyleSheet.create(
     borderColor: "rgba(212,211,211, 0.3)"
 
 
-  },
-  btnClick:{
-    backgroundColor:"#FF6B6B",
-    width:100,
-    height:50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft:5
   },
   btn:{
     backgroundColor:"#35AAFF", 
